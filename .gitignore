@@ -1,0 +1,13 @@
+.venv/
+build/
+dist/
+*.spec
+__pycache__/
+.pytest_cache/
+vault.dat
+vault.dat.tmp
+vault.bak
+*.enc
+dev_usb/
+.secret/
+.ruff_cache/

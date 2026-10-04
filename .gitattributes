@@ -1,0 +1,4 @@
+# 모든 텍스트 파일은 LF로 저장한다 (Windows에서 스크립트가 CRLF로 써도 git이 LF로 맞춘다)
+* text=auto eol=lf
+# cmd는 LF 배치 파일에서 goto가 오동작할 수 있어 CRLF로 둔다
+*.bat text eol=crlf

@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Check version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: grep -q "'ProductVersion', '${GITHUB_REF_NAME#v}'" version_info.txt || { echo "version_info.txt does not match $GITHUB_REF_NAME"; exit 1; }
+
+      - name: Lint
+        run: |
+          python -m pip install ruff
+          python -m ruff check secret tests
+
+      - name: Test and build
+        shell: cmd
+        run: build.bat
+
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash dist\Secret.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Secret.exe" | Out-File -Encoding ascii dist\Secret.exe.sha256
+          Get-Content dist\Secret.exe.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Secret
+          path: |
+            dist/Secret.exe
+            dist/Secret.exe.sha256
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/Secret.exe dist/Secret.exe.sha256 --title "Secret $GITHUB_REF_NAME" --generate-notes
