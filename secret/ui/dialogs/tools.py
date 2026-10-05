@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QPlainTextEdit, QStackedWidget, QTabWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFileDialog, QFrame, QHBoxLayout, QPlainTextEdit, QStackedWidget, QVBoxLayout, QWidget
 
 from ...core.crypto_core import DISCORD_LIMIT, decrypt_text, encrypt_text
 from ...core.file_crypto import DISCORD_FILE_LIMIT, decrypt_file, encrypt_file, is_encrypted_file
@@ -10,7 +10,7 @@ from ...i18n import tr
 from .. import theme
 from ..messages import friendly
 from ..sidebar import human
-from ..widgets import ProgressButton, button, icon_label, label, set_icon
+from ..widgets import ProgressButton, WrapTabs, button, icon_label, label, set_icon
 from ..worker import run_async
 from .change_password import ChangePasswordPanel
 from .duplicates import DuplicatesPanel
@@ -353,8 +353,7 @@ class ToolsPage(QFrame):
         s = self.session
         if s.unlocked:
             if self.tabs is None:
-                self.tabs = QTabWidget()
-                self.tabs.setObjectName("ToolTabs")
+                self.tabs = WrapTabs(indent=PAD)
                 self.tabs.addTab(_TextEncrypt(self), tr("텍스트 암호화"))
                 self.tabs.addTab(_TextDecrypt(self), tr("텍스트 복호화"))
                 self.tabs.addTab(_FileCrypt(self), tr("파일 암호화"))

@@ -3,7 +3,7 @@ import sys
 import threading
 import time
 
-from PySide6.QtCore import QEvent, QProcess, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QProcess, QProcessEnvironment, Qt, QTimer, Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QApplication, QFrame, QHBoxLayout, QMainWindow, QStackedWidget, QVBoxLayout, QWidget
 
@@ -44,6 +44,16 @@ TRASH_CRUMB = ":trash"
 WINDOW_SIZE = (1400, 860)
 FS_DEBOUNCE_MS = 400
 FS_MAX_DELAY = 2.0
+
+
+def relaunch_process() -> QProcess:
+    proc = QProcess()
+    env = QProcessEnvironment.systemEnvironment()
+    env.insert("PYINSTALLER_RESET_ENVIRONMENT", "1")
+    proc.setProcessEnvironment(env)
+    proc.setProgram(sys.executable)
+    proc.setArguments(sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv)
+    return proc
 
 
 class MainWindow(QMainWindow):
@@ -353,8 +363,7 @@ class MainWindow(QMainWindow):
     def restart(self) -> None:
         if not self.close():
             return
-        args = sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv
-        QProcess.startDetached(sys.executable, args)
+        relaunch_process().startDetached()
         QApplication.instance().quit()
 
     def show_gallery(self) -> bool:

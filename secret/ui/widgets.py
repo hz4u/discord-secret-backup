@@ -1,15 +1,18 @@
 from PySide6.QtCore import QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QIconEngine, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QDialog,
     QFormLayout,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -398,3 +401,122 @@ def confirm_weak(parent, fields: NewPasswordFields) -> bool:
     if not fields.is_weak():
         return True
     return ask(parent, tr("약한 비밀번호"), tr("약한 비밀번호입니다.\n12자 이상, 흔하지 않은 문장형 비밀번호를 권장합니다.\n\n그래도 계속할까요?"), yes=tr("계속"))
+
+
+class FlowLayout(QLayout):
+    def __init__(self, parent=None, spacing: int = 0):
+        super().__init__(parent)
+        self._items = []
+        self.setSpacing(spacing)
+
+    def addItem(self, item) -> None:
+        self._items.append(item)
+
+    def count(self) -> int:
+        return len(self._items)
+
+    def itemAt(self, i):
+        return self._items[i] if 0 <= i < len(self._items) else None
+
+    def takeAt(self, i):
+        return self._items.pop(i) if 0 <= i < len(self._items) else None
+
+    def expandingDirections(self):
+        return Qt.Orientation(0)
+
+    def hasHeightForWidth(self) -> bool:
+        return True
+
+    def heightForWidth(self, width: int) -> int:
+        return self._arrange(QRect(0, 0, width, 0), move=False)
+
+    def setGeometry(self, rect: QRect) -> None:
+        super().setGeometry(rect)
+        self._arrange(rect, move=True)
+
+    def sizeHint(self) -> QSize:
+        return self.minimumSize()
+
+    def minimumSize(self) -> QSize:
+        size = QSize()
+        for item in self._items:
+            size = size.expandedTo(item.minimumSize())
+        m = self.contentsMargins()
+        return size + QSize(m.left() + m.right(), m.top() + m.bottom())
+
+    def _arrange(self, rect: QRect, move: bool) -> int:
+        m = self.contentsMargins()
+        area = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
+        x, y, line = area.x(), area.y(), 0
+        for item in self._items:
+            hint = item.sizeHint()
+            if x > area.x() and x + hint.width() > area.right() + 1:
+                x, y, line = area.x(), y + line + self.spacing(), 0
+            if move:
+                item.setGeometry(QRect(QPoint(x, y), hint))
+            x += hint.width() + self.spacing()
+            line = max(line, hint.height())
+        return y + line - rect.y() + m.bottom()
+
+
+class WrapTabs(QWidget):
+    currentChanged = Signal(int)
+
+    def __init__(self, indent: int = 0):
+        super().__init__()
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        self.bar = QWidget()
+        self.bar.setObjectName("TabRow")
+        self._flow = FlowLayout(self.bar)
+        self._flow.setContentsMargins(indent, 0, indent, 0)
+        lay.addWidget(self.bar)
+        self.pages = QStackedWidget()
+        lay.addWidget(self.pages, 1)
+        self._group = QButtonGroup(self)
+        self._group.setExclusive(True)
+        self._group.idClicked.connect(self.setCurrentIndex)
+
+    def addTab(self, page: QWidget, text: str) -> int:
+        i = self.pages.addWidget(page)
+        tab = QPushButton(text)
+        tab.setObjectName("WrapTab")
+        tab.setCheckable(True)
+        tab.setCursor(Qt.PointingHandCursor)
+        self._group.addButton(tab, i)
+        self._flow.addWidget(tab)
+        if i == 0:
+            tab.setChecked(True)
+        return i
+
+    def count(self) -> int:
+        return self.pages.count()
+
+    def widget(self, i: int) -> QWidget:
+        return self.pages.widget(i)
+
+    def indexOf(self, page: QWidget) -> int:
+        return self.pages.indexOf(page)
+
+    def tabText(self, i: int) -> str:
+        return self._group.button(i).text()
+
+    def tabButton(self, i: int) -> QPushButton:
+        return self._group.button(i)
+
+    def currentIndex(self) -> int:
+        return self.pages.currentIndex()
+
+    def currentWidget(self) -> QWidget:
+        return self.pages.currentWidget()
+
+    def setCurrentIndex(self, i: int) -> None:
+        if i == self.pages.currentIndex() and self._group.button(i).isChecked():
+            return
+        self.pages.setCurrentIndex(i)
+        self._group.button(i).setChecked(True)
+        self.currentChanged.emit(i)
+
+    def setCurrentWidget(self, page: QWidget) -> None:
+        self.setCurrentIndex(self.pages.indexOf(page))

@@ -392,10 +392,12 @@ QTreeView::indicator {{ width: 16px; height: 16px; border-radius: 4px; border: 1
 QTreeView::indicator:checked {{ background: {ACCENT}; border-color: {ACCENT}; image: url(%CHECK%); }}
 QTreeView::indicator:hover {{ border-color: {FAINT}; }}
 
-QTabWidget::pane {{ border: none; }}
-QTabWidget#ToolTabs::tab-bar {{ left: 24px; }}
-QTabBar::tab {{ background: transparent; color: {MUTED}; padding: 10px 16px; border-bottom: 2px solid transparent; font-size: 14px; }}
-QTabBar::tab:selected {{ color: {TEXT}; border-bottom-color: {ACCENT}; }}
+QPushButton#WrapTab {{
+    background: transparent; color: {MUTED}; border: none; border-bottom: 2px solid transparent; border-radius: 0;
+    padding: 10px 16px; min-height: 0; font-size: 14px;
+}}
+QPushButton#WrapTab:hover {{ color: {TEXT}; }}
+QPushButton#WrapTab:checked {{ color: {TEXT}; border-bottom-color: {ACCENT}; }}
 
 QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
 

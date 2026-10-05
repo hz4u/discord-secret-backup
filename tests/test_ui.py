@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pytest
 
@@ -1348,3 +1349,14 @@ def test_gallery_starts_with_the_saved_view_and_sort(qtbot, qapp, usb, monkeypat
     w = MainWindow(Session(usb, client_factory=lambda token: FakeDiscord()))
     qtbot.addWidget(w)
     assert w.gallery.stack.currentIndex() == 1 and w.gallery.sort.currentIndex() == 2
+
+
+def test_restart_starts_a_fresh_onefile_instance(monkeypatch):
+    from secret.ui.main_window import relaunch_process
+
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "argv", [r"E:\Secret.exe", "--root", "E:\\"])
+    proc = relaunch_process()
+    assert proc.program() == sys.executable
+    assert proc.arguments() == ["--root", "E:\\"]
+    assert proc.processEnvironment().value("PYINSTALLER_RESET_ENVIRONMENT") == "1"
