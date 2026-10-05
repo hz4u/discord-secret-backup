@@ -30,6 +30,7 @@ The release `Secret.exe` bundles the components below. Their licenses apply to t
 | Pretendard | SIL Open Font License 1.1 (`assets/fonts/Pretendard-LICENSE.txt`) | https://github.com/orioncactus/pretendard |
 | IBM Plex Mono | SIL Open Font License 1.1 (`assets/fonts/IBMPlex-OFL.txt`) | https://github.com/IBM/plex |
 | Phosphor Icons (via QtAwesome) | MIT | https://phosphoricons.com |
+| Font Awesome Free brand icon "discord" (via QtAwesome) | CC BY 4.0 | https://fontawesome.com |
 | Other icon fonts shipped inside QtAwesome (Font Awesome Free, Material Design Icons, Remix Icon, Elusive Icons, Codicons) | See the QtAwesome package | https://github.com/spyder-ide/qtawesome |
 | "Select Multiple" icon (`assets/icons/select-multiple.svg`) from Coolicons by Kryston Schwarze | CC BY 4.0 | https://github.com/krystonschwarze/coolicons |
 

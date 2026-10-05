@@ -23,6 +23,7 @@ PANEL_WIDTH = 320
 IDLE_TEXT = tr("지금 동기화")
 BUTTON_GAP = 8
 DISCORD_BLURPLE = "#5865F2"
+DISCORD_GLYPH = "fa6b.discord"
 SPINNER = "|/-\\"
 FLASH_MS = 2500
 LOG_LINES = 500
@@ -54,9 +55,9 @@ def discord_avatar(size: int = 48) -> QPixmap:
     p.setPen(Qt.NoPen)
     p.setBrush(QColor(DISCORD_BLURPLE))
     p.drawEllipse(out.rect())
-    glyph = out.width() * 3 // 5
+    glyph = out.width() * 14 // 25
     offset = (out.width() - glyph) // 2
-    theme.icon("discord-logo", color="#FFFFFF").paint(p, QRect(offset, offset, glyph, glyph))
+    theme.icon(DISCORD_GLYPH, color="#FFFFFF").paint(p, QRect(offset, offset, glyph, glyph))
     p.end()
     out.setDevicePixelRatio(ratio)
     return out

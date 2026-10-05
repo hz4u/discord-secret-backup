@@ -50,6 +50,8 @@ _FILLED: dict[str, str] = {}
 
 
 def icon(name: str, color: str = MUTED, **kw) -> QIcon:
+    if "." in name:
+        return qta.icon(name, color=color, **kw)
     full = _FILLED.get(name)
     if full is None:
         full = f"ph.{name}"

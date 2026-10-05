@@ -25,7 +25,7 @@ class ConnectDialog(Dialog):
         if mode == "password":
             self.heading(tr("메인 비밀번호 만들기"), tr("도구와 디스코드 백업이 모두 이 비밀번호 하나로 동작합니다. 잊으면 누구도 풀 수 없습니다."), "key")
         else:
-            self.heading(tr("Discord 연결"), tr("봇 토큰과 서버 ID를 넣고 연결을 확인하세요."), "discord-logo", theme.TEXT)
+            self.heading(tr("Discord 연결"), tr("봇 토큰과 서버 ID를 넣고 연결을 확인하세요."), "fa6b.discord", theme.TEXT)
 
         form = QFormLayout()
         form.setLabelAlignment(Qt.AlignLeft)
