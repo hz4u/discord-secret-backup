@@ -120,7 +120,7 @@ class RightPanel(QFrame):
         self.discord_action = button("")
         self.discord_action.clicked.connect(self._discord_action)
         for b in (self.restore_button, self.discord_action):
-            b.setStyleSheet("padding: 0 12px;")
+            b.setStyleSheet("padding: 0 10px;")
             actions.addWidget(b, 1)
         buttons = QVBoxLayout()
         buttons.setSpacing(BUTTON_GAP)

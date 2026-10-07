@@ -129,9 +129,10 @@ class VersionsPanel(_Panel):
         header = self.view.header()
         header.setStretchLastSection(False)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
-        for col, width in ((0, 220), (2, 130), (3, 130)):
-            header.setSectionResizeMode(col, QHeaderView.Fixed)
-            header.resizeSection(col, width)
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        header.resizeSection(0, 220)
+        for col in (2, 3):
+            header.setSectionResizeMode(col, QHeaderView.ResizeToContents)
         self.rollback_btn = button(tr("이 시점으로 되돌리기"), "Primary", "clock-counter-clockwise", theme.ACCENT_INK)
         self.rollback_btn.clicked.connect(self.rollback)
         self.top.addWidget(self.rollback_btn)

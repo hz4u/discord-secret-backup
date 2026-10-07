@@ -6,6 +6,8 @@ Secret is a portable Windows app for an encrypted USB drive or external disk. It
 
 The drive is the original. Discord only ever holds an encrypted copy, and the sync is one-way (drive → Discord). If the drive is lost, you can rebuild every folder and file from Discord with your bot token, server ID and password.
 
+![Secret gallery](.github/screenshots/gallery.png)
+
 > [!WARNING]
 > Discord is not a file storage service. Using a bot to store backups may conflict with Discord's Terms of Service or Developer Policy, and Discord can remove messages, servers or bots at any time. Use Secret at your own risk, keep the drive as your primary copy, and use a private server that only you can see.
 
@@ -20,6 +22,14 @@ The drive is the original. Discord only ever holds an encrypted copy, and the sy
 - **Tools.** Text encryption (`ENC1:` text you can paste into Discord), file encryption up to 200 MB, hiding folders from File Explorer, finding duplicate files, and changing the password.
 - **Leaves nothing behind.** Thumbnails and previews stay in memory. Copied passwords are cleared from the clipboard and kept out of Windows clipboard history.
 - **Languages:** English, 한국어, 简体中文, 日本語, Русский.
+
+## Screenshots
+
+| Viewer | Version history | Settings |
+|---|---|---|
+| ![Viewer](.github/screenshots/viewer.png) | ![Version history](.github/screenshots/versions.png) | ![Settings](.github/screenshots/settings.png) |
+
+The photos in the screenshots are generated samples.
 
 ## What Discord can see
 
