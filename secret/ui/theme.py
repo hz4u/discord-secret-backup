@@ -4,10 +4,22 @@ import tempfile
 from pathlib import Path
 
 import qtawesome as qta
-from PySide6.QtCore import QByteArray, QEvent, QObject, QPoint, QRect, QRectF, Qt
-from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon, QIconEngine, QImage, QPainter, QPixmap
+from PySide6.QtCore import QByteArray, QEvent, QObject, QPoint, QRect, QRectF, Qt, QTimer
+from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon, QIconEngine, QImage, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import QAbstractScrollArea, QApplication, QScrollBar
+from PySide6.QtWidgets import (
+    QAbstractScrollArea,
+    QAbstractSpinBox,
+    QApplication,
+    QComboBox,
+    QFrame,
+    QLineEdit,
+    QListWidget,
+    QPlainTextEdit,
+    QScrollBar,
+    QTextEdit,
+    QWidget,
+)
 
 from .. import i18n
 
@@ -155,6 +167,8 @@ def install(app: QApplication) -> None:
     app.installEventFilter(app._window_styler)
     app._scroll_hover = _ScrollHover(app)
     app.installEventFilter(app._scroll_hover)
+    app._outliner = _Outliner(app)
+    app.installEventFilter(app._outliner)
     pal = app.palette()
     for role, color in (
         (pal.ColorRole.Window, BG), (pal.ColorRole.Base, CARD), (pal.ColorRole.AlternateBase, PANEL),
@@ -262,6 +276,85 @@ class _ScrollHover(QObject):
         return False
 
 
+FIELDS = (QLineEdit, QPlainTextEdit, QTextEdit, QAbstractSpinBox)
+OUTLINED = {"Card": 12, "Joined": 8}
+
+
+def outline_radius(widget: QWidget) -> int | None:
+    if widget.objectName() == "LogView":
+        return None
+    if isinstance(widget, QFrame) and widget.objectName() in OUTLINED:
+        return OUTLINED[widget.objectName()]
+    if not isinstance(widget, (*FIELDS, QComboBox, QListWidget)):
+        return None
+    parent = widget.parentWidget()
+    if isinstance(parent, (QComboBox, QAbstractSpinBox)):
+        return None
+    while parent is not None:
+        if parent.objectName() == "Joined":
+            return None
+        parent = parent.parentWidget()
+    return 8
+
+
+class Outline(QWidget):
+    def __init__(self, host: QWidget, radius: int):
+        super().__init__(host)
+        self.radius = radius
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.setFocusPolicy(Qt.NoFocus)
+        host.installEventFilter(self)
+        if isinstance(host, QComboBox):
+            host.view().window().installEventFilter(self)
+        self.setGeometry(host.rect())
+        self.raise_()
+        self.show()
+
+    def color(self) -> str:
+        host = self.parentWidget()
+        if isinstance(host, QComboBox):
+            if host.view().isVisible() or host.hasFocus():
+                return FOCUS
+            return BORDER_HI if host.underMouse() else BORDER
+        if isinstance(host, FIELDS) and host.hasFocus():
+            return FOCUS
+        return BORDER
+
+    def eventFilter(self, obj, event):  # noqa: N802
+        kind = event.type()
+        if obj is self.parentWidget():
+            if kind == QEvent.Resize:
+                self.setGeometry(obj.rect())
+            elif kind == QEvent.ChildAdded:
+                QTimer.singleShot(0, self.raise_)
+            elif kind in (QEvent.FocusIn, QEvent.FocusOut, QEvent.Enter, QEvent.Leave, QEvent.EnabledChange):
+                self.update()
+        elif kind in (QEvent.Show, QEvent.Hide):
+            self.update()
+        return False
+
+    def paintEvent(self, event):  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        inset = 0.5
+        path.addRoundedRect(QRectF(self.rect()).adjusted(inset, inset, -inset, -inset), self.radius - inset, self.radius - inset)
+        p.setPen(QPen(QColor(self.color()), 1))
+        p.setBrush(Qt.NoBrush)
+        p.drawPath(path)
+        p.drawPath(path)
+
+
+class _Outliner(QObject):
+    def eventFilter(self, obj, event):  # noqa: N802
+        if event.type() == QEvent.Show and obj.isWidgetType() and not isinstance(obj, Outline):
+            if getattr(obj, "_outline", None) is None:
+                radius = outline_radius(obj)
+                if radius:
+                    obj._outline = Outline(obj, radius)
+        return False
+
+
 class _WindowStyler(QObject):
     def eventFilter(self, obj, event):  # noqa: N802
         if event.type() == QEvent.Show and obj.isWidgetType() and obj.windowType() in (Qt.Window, Qt.Dialog):
@@ -325,11 +418,10 @@ QTreeView::branch:has-children:open {{ image: url(%CARET_DOWN%); }}
 QHeaderView::section {{ background: {PANEL}; color: {MUTED}; border: none; border-bottom: 1px solid {BORDER}; padding: 8px 10px; font-size: 13px; }}
 
 QLineEdit, QPlainTextEdit, QTextEdit, QComboBox, QSpinBox {{
-    background: {PANEL}; border: 1px solid {BORDER}; border-radius: 8px; padding: 8px 12px;
+    background: {PANEL}; border: 1px solid transparent; border-radius: 8px; padding: 8px 12px;
     selection-background-color: {ACCENT_SOFT}; font-size: 14px; lineedit-password-character: 8226;
 }}
 QLineEdit, QComboBox {{ min-height: 38px; max-height: 38px; padding: 0 12px; }}
-QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QComboBox:focus {{ border-color: {FOCUS}; }}
 QLineEdit:disabled {{ color: {FAINT}; }}
 
 QComboBox {{ combobox-popup: 0; }}
@@ -342,8 +434,7 @@ QComboBox QAbstractItemView::item {{ min-height: 32px; padding: 0 10px; border-r
 QComboBox QAbstractItemView::item:hover, QComboBox QAbstractItemView::item:selected {{
     background: {SELECTED}; color: {ACCENT_HI};
 }}
-QComboBox:hover {{ border-color: {BORDER_HI}; background: {CARD}; }}
-QComboBox:on {{ border-color: {FOCUS}; }}
+QComboBox:hover {{ background: {CARD}; }}
 
 QPushButton {{
     background: {BUTTON}; border: none; border-radius: 8px;
@@ -363,7 +454,7 @@ QToolButton:checked {{ background: {SELECTED}; border: 1px solid {BORDER_HI}; }}
 QToolButton#Crumb {{ font-size: 16px; font-weight: 600; padding: 4px 6px; }}
 QToolButton#Crumb:disabled {{ color: {TEXT}; }}
 
-#Card {{ background: {CARD}; border: 1px solid {BORDER}; border-radius: 12px; }}
+#Card {{ background: {CARD}; border: 1px solid transparent; border-radius: 12px; }}
 #CardTitle {{ font-size: 16px; font-weight: 600; }}
 #Big {{ font-size: 20px; font-weight: 700; }}
 #Dialog {{ background: {BG}; }}
@@ -375,7 +466,7 @@ QToolButton#Crumb:disabled {{ color: {TEXT}; }}
 #LogView {{ background: transparent; border: none; border-radius: 0; padding: 8px; font-size: 12px; }}
 #UsbStatus {{ background: {CARD}; border-top: 1px solid {BORDER}; border-right: 1px solid {BORDER}; }}
 
-#Joined {{ background: {PANEL}; border: 1px solid {BORDER}; border-radius: 8px; }}
+#Joined {{ background: {PANEL}; border: 1px solid transparent; border-radius: 8px; }}
 #Joined QLineEdit {{ background: transparent; border: none; border-radius: 0; }}
 #Joined QPushButton, #Joined QToolButton {{ background: transparent; border: none; border-radius: 0; min-height: 38px; }}
 #Joined QPushButton:hover, #Joined QToolButton:hover {{ background: {BUTTON_HI}; }}
@@ -413,7 +504,7 @@ QListView#Grid, QTreeView#List {{ background: transparent; border: none; }}
 
 QTreeView#List::item {{ padding: 8px 6px 8px 24px; }}
 QTreeView#List QHeaderView::section {{ padding: 8px 6px 8px 24px; border-top: 1px solid {BORDER}; }}
-QListWidget {{ background: {PANEL}; border: 1px solid {BORDER}; border-radius: 8px; font-size: 13px; padding: 4px; }}
+QListWidget {{ background: {PANEL}; border: 1px solid transparent; border-radius: 8px; font-size: 13px; padding: 4px; }}
 QMenu {{ background: {CARD}; border: 1px solid {BORDER_HI}; border-radius: 8px; padding: 6px; }}
 QMenu::item {{ padding: 8px 18px 8px 12px; border-radius: 6px; }}
 QMenu::item:selected {{ background: {SELECTED}; }}

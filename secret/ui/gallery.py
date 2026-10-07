@@ -290,6 +290,8 @@ class CardDelegate(QStyledItemDelegate):
         painter.setPen(QColor(theme.ACCENT if selected else theme.BORDER_HI if hover else theme.BORDER))
         painter.setBrush(QColor(theme.CARD_HI if hover else theme.CARD))
         painter.drawRoundedRect(r, 10, 10)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(r, 10, 10)
 
         pad = 6
         thumb_h = int(r.width() * 0.6)

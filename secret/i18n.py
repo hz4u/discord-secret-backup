@@ -1,12 +1,11 @@
 import json
-import locale
 import string
 import sys
 from pathlib import Path
 
 LANGUAGES = {
-    "ko": "한국어",
     "en": "English",
+    "ko": "한국어",
     "zh": "简体中文",
     "ja": "日本語",
     "ru": "Русский",
@@ -32,20 +31,6 @@ def _table(lang: str) -> dict:
         except (OSError, ValueError):
             _tables[lang] = {}
     return _tables[lang]
-
-
-def system_language() -> str:
-    try:
-        if sys.platform == "win32":
-            import ctypes
-
-            name = locale.windows_locale.get(ctypes.windll.kernel32.GetUserDefaultUILanguage(), "")
-        else:
-            name = locale.getlocale()[0] or ""
-    except Exception:  # noqa: BLE001
-        name = ""
-    code = name.split("_")[0].lower()
-    return code if code in LANGUAGES else FALLBACK
 
 
 def set_language(lang: str) -> None:

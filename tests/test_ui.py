@@ -1360,3 +1360,36 @@ def test_restart_starts_a_fresh_onefile_instance(monkeypatch):
     assert proc.program() == sys.executable
     assert proc.arguments() == ["--root", "E:\\"]
     assert proc.processEnvironment().value("PYINSTALLER_RESET_ENVIRONMENT") == "1"
+
+
+def test_rounded_widgets_get_a_smooth_outline(qtbot, qapp):
+    from PySide6.QtWidgets import QComboBox, QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget
+
+    from secret.ui.widgets import Card, joined
+
+    theme.install(qapp)
+    host = QWidget()
+    qtbot.addWidget(host)
+    lay = QVBoxLayout(host)
+    field, combo, card, log = QLineEdit(), QComboBox(), Card(), QPlainTextEdit()
+    combo.addItems(["a", "b"])
+    log.setObjectName("LogView")
+    inner = QLineEdit()
+    group = joined(inner)
+    for w in (field, combo, card, log, group):
+        lay.addWidget(w)
+    host.show()
+    qtbot.waitExposed(host)
+
+    assert field._outline.radius == 8 and card._outline.radius == 12 and group._outline.radius == 8
+    assert getattr(log, "_outline", None) is None and getattr(inner, "_outline", None) is None
+    assert field._outline.geometry() == field.rect()
+
+    assert field._outline.color() == theme.BORDER
+    field.setFocus()
+    qtbot.waitUntil(field.hasFocus)
+    assert field._outline.color() == theme.FOCUS
+    combo.showPopup()
+    qtbot.waitUntil(combo.view().isVisible)
+    assert combo._outline.color() == theme.FOCUS
+    combo.hidePopup()

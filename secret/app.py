@@ -33,12 +33,18 @@ def _install_qt_translation(app, lang: str) -> None:
         app.installTranslator(translator)
 
 
-def main() -> int:
+def startup_language(root: Path) -> str:
     from . import i18n
     from .core import prefs
 
+    return prefs.load(root).get("language") or i18n.FALLBACK
+
+
+def main() -> int:
+    from . import i18n
+
     root = resolve_root(sys.argv[1:])
-    i18n.set_language(prefs.load(root).get("language") or i18n.system_language())
+    i18n.set_language(startup_language(root))
 
     from PySide6.QtWidgets import QApplication
 
